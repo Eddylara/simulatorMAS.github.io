@@ -3,7 +3,6 @@
   padding: 0px;
   margin: 0px;
   font-family: "Roboto", sans-serif;
-  border: solid 1px red;
 }
 
 .main_flex {
@@ -17,7 +16,7 @@
 .main_left {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
 
   height: 100%;
@@ -31,19 +30,50 @@
   align-items: center;
 }
 .options {
+  display: flex;
+  flex-direction: column;
   width: 300px;
+  height: 350px;
+  border: solid 1px black;
+  width: 300px;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.form,
+.form > label {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
 }
 .central {
   display: flex;
   flex-direction: row;
-
+  justify-content: space-between;
+  gap: 18px;
   width: 800px;
   height: 440px;
 }
 .scene {
   width: 600px;
+  border: solid 1px black;
 }
-
+.equation_container {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.equation {
+  text-align: center;
+  font-size: 26px;
+}
+.title {
+  width: 100%;
+  padding: 10px 15px 10px 15px;
+  background-color: aquamarine;
+}
 @media screen and (max-width: 805px) {
   .central {
     width: 412px;
@@ -62,8 +92,19 @@
     width: max-content;
     height: max-content;
     flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .scene {
+    height: 226px;
   }
   .variales {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
     width: 100%;
+  }
+  .equation_container {
+    width: 309px;
   }
 }
