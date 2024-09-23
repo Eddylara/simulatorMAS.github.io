@@ -72,7 +72,7 @@
 .title {
   width: 100%;
   padding: 10px 15px 10px 15px;
-  background-color: aquamarine;
+  background-color: #f999;
 }
 @media screen and (max-width: 805px) {
   .central {

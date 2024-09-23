@@ -13,10 +13,12 @@ let $playBt = document.querySelector("#btnPlay");
 let widthMasa = 30;
 let heightMasa = 30;
 let amplitude = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud
-let period = 1000; // Período en milisegundos
+let period = 6000; // Período en milisegundos
 let omega = (2 * Math.PI) / period; // Frecuencia angular
 let phase = 0; // Fase inicial
 let startTime = null; // Tiempo de inicio
+let elapsedTime = null;
+let timeSave = 0;
 
 // Variables para la animación
 let posx = 0; // Posición
@@ -98,9 +100,17 @@ function dibujarEscena() {
 }
 
 function animate(timestamp) {
-  if (!startTime) startTime = timestamp; // Marcar el inicio
-  let elapsedTime = timestamp - startTime; // Calcular tiempo transcurrido
+  let hh = !startTime;
+  console.log(hh);
+  if (!startTime) {
+    startTime = timestamp;
+    console.log("HOLAAA");
+  } // Marcar el inicio
+
+  elapsedTime = timestamp - startTime; // Calcular tiempo transcurrido
   amplitude = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud
+  console.log("StartTime");
+  console.log("T= ", elapsedTime);
 
   posx = amplitude * Math.sin(omega * elapsedTime + phase);
 
@@ -144,12 +154,13 @@ $playBt.addEventListener("click", function () {
   if (isAnimating) {
     // Detener la animación
     cancelAnimationFrame(animationId);
+    timeSave = elapsedTime;
     isAnimating = false;
     $playBt.textContent = "Iniciar";
   } else {
     // Iniciar la animación
     isAnimating = true;
-    startTime = null; // Reiniciar el tiempo de inicio
+    startTime = performance.now() - timeSave;
     requestAnimationFrame(animate);
     $playBt.textContent = "Detener";
   }
