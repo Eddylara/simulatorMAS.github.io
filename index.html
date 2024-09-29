@@ -1,74 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simulador MAS</title>
-    <link rel="stylesheet" href="styles_main.css" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-      rel="stylesheet"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador MAS</title>
+  <link rel="stylesheet" href="styles_main.css" />
 
-    <script
-      src="https://kit.fontawesome.com/e186f730ef.js"
-      crossorigin="anonymous"
-    ></script>
-  </head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+    rel="stylesheet" />
 
-  <body>
-    <div class="main_flex">
-      <div class="main_left">
-        <header class="title">
-          <h1>Universidad Tecnologica de Bolivar</h1>
-        </header>
+  <script src="https://kit.fontawesome.com/e186f730ef.js" crossorigin="anonymous"></script>
+</head>
 
-        <main class="central">
-          <div class="variales">
-            <div id="pos" class="itemvar">x = 2.3m</div>
-            <div id="vel" class="itemvar">v = 4.22 m/s</div>
-            <div id="ace" class="itemvar">a = 6m/m2</div>
-          </div>
-          <canvas class="scene" width="600px" height="440px" id="canvas">
-          </canvas>
-        </main>
-        <p>Ecuaciones</p>
-        <div class="equation_container">
-          <div class="equation">x(t) = sen(wt+p)</div>
-          <div class="equation">x(t) = sen(wt+p)</div>
-          <div class="equation">x(t) = sen(wt+p)</div>
+<body>
+  <div class="main_flex">
+    <div class="main_left">
+      <header class="title">
+        <h1>Universidad Tecnologica de Bolivar</h1>
+      </header>
+
+      <main class="central">
+        <div class="variales">
+          <div id="pos" class="itemvar">x = 0 m</div>
+          <div id="vel" class="itemvar">v = 0 m/s</div>
+          <div id="ace" class="itemvar">a = 0 m/s2</div>
         </div>
-      </div>
-
-      <div class="main_right">
-        <aside class="options">
-          <div class="form">
-            <label>
-              Constante del Resorte:
-              <input type="number" name="const" id="resorte_const" />
-            </label>
-
-            <label>
-              Masa :
-              <input
-                type="number"
-                name="masaObj"
-                id="masa"
-                min="0.2"
-                max="600"
-                step="5"
-                placeholder="Introduce la masa en [g]"
-              />
-            </label>
-          </div>
-          <i class="fa-solid fa-play" id="btnPlay"></i>
-        </aside>
+        <canvas class="scene" width="600px" height="440px" id="canvas">
+        </canvas>
+      </main>
+      <p>Ecuaciones</p>
+      <div class="equation_container">
+        <div class="equation" id="eqPos">x(t) = Asen(wt+p)</div>
+        <div class="equation" id="eqVelo">x(t) = Awcos(wt+p)</div>
+        <div class="equation" id="eqAce">x(t) = -Awsen(wt+p)</div>
       </div>
     </div>
 
-    <script src="script_main.js"></script>
-  </body>
+    <div class="main_right">
+      <aside class="options">
+        <div class="form">
+          <label>
+            Constante del Resorte:
+            <input type="number" name="const" id="resorte_const" min="5" max="2500" step="5"
+              placeholder="Introduce la constante del resorte [N/m]" />
+          </label>
+
+          <label>
+            Masa :
+            <input type="number" name="masaObj" id="masa" min="0.2" max="600" step="5"
+              placeholder="Introduce la masa en [g]" />
+          </label>
+        </div>
+        <i class="fa-solid fa-play" id="btnPlay"></i>
+      </aside>
+    </div>
+  </div>
+
+  <script src="script_main.js"></script>
+</body>
+
 </html>
