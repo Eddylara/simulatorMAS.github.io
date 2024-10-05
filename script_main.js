@@ -14,7 +14,31 @@ $constResorte.value = 50;
 let $playBt = document.querySelector("#btnPlay");
 // Boton para reiniciar
 let $btnRestart = document.querySelector("#btn-restart");
+// ECUACIONES
+let $divEcuPos = document.querySelector("#eqPos");
+let $divEcuVel = document.querySelector("#eqVelo");
+let $divEcuAce = document.querySelector("#eqAce");
 
+function restaurarEcua() {
+  $divEcuPos.innerHTML = "x(t) = Asen(&omega;t + &phi;) [m]";
+  $divEcuVel.innerHTML = "v(t) = A&omega;cos(&omega;t + &phi;) [m/s]";
+  $divEcuAce.innerHTML =
+    "a(t) = -A&omega;<sup>2</sup>sen(&omega;t + &phi;) [m/s<sup>2</sup>]";
+}
+
+function actualizarEcua() {
+  let samplitude = Math.round((amplitude / 100).toFixed(4) * 1000) / 1000;
+  let somega = Math.round(omega.toFixed(4) * 1000) / 1000;
+  let coe2 = Math.round((samplitude * omega).toFixed(4) * 1000) / 1000;
+  let coe3 = Math.round((samplitude * omega * omega).toFixed(4) * 1000) / 1000;
+  let sphase = "+ <sup>1</sup>/<sub>2</sub>&pi;";
+  if (phase < 0) {
+    sphase = "- <sup>1</sup>/<sub>2</sub>&pi;";
+  }
+  $divEcuPos.innerHTML = `x(t) = ${samplitude}sen(${somega}t ${sphase}) [m]`;
+  $divEcuVel.innerHTML = `v(t) = ${coe2}cos(${somega}t ${sphase}) [m/s]`;
+  $divEcuAce.innerHTML = `a(t) = -${coe3}sen(${somega}t ${sphase}) [m/s<sup>2</sup>]`;
+}
 // Variables de control
 let isDragging = false;
 let possibleDragging = true;
@@ -206,6 +230,8 @@ scene.addEventListener("mouseup", function () {
 
     velocity = 0; // Velocidad inicial al soltar
     requestAnimationFrame(animate); // Comenzar la animación
+    $playBt.style.display = "block";
+    actualizarEcua();
     $playBt.textContent = "Detener"; // Cambiar el texto del botón
   }
 });
@@ -280,6 +306,8 @@ scene.addEventListener("touchend", () => {
 
     velocity = 0; // Velocidad inicial al soltar
     requestAnimationFrame(animate); // Comenzar la animación
+    $playBt.style.display = "block";
+    actualizarEcua();
     $playBt.textContent = "Detener"; // Cambiar el texto del botón
   }
 });
@@ -302,6 +330,7 @@ $masaInput.addEventListener("input", function () {
     }
 
     dibujarEscena(); // Redibujar la escena cuando cambie la masa
+    $playBt.style.display = "none";
     isDragging = false; // Detener el arrastre
     isAnimating = false; // Detener la animación
     startTime = null; // Reiniciar el tiempo de inicio
@@ -324,7 +353,7 @@ $constResorte.addEventListener("input", () => {
     let masa = parseFloat($masaInput.value) / 1000;
     omega = Math.sqrt(value / masa); // Recalcular omega
     period = ((2 * Math.PI) / omega) * 1000;
-
+    $playBt.style.display = "none";
     isDragging = false; // Detener el arrastre
     isAnimating = false; // Detener la animación
     startTime = null; // Reiniciar el tiempo de inicio
@@ -359,7 +388,7 @@ $playBt.addEventListener("click", function () {
     cancelAnimationFrame(animationId);
     timeSave = elapsedTime; // Guardar el tiempo transcurrido
     isAnimating = false;
-    $playBt.textContent = "Iniciar";
+    $playBt.textContent = "Continuar";
   } else {
     // Iniciar la animación desde el punto donde se detuvo
     isAnimating = true;
@@ -373,6 +402,8 @@ $btnRestart.addEventListener("click", () => {
   resetSimulation();
 });
 function resetSimulation() {
+  restaurarEcua();
+  $playBt.style.display = "none";
   // Reiniciar todas las variables
   isDragging = false; // Detener el arrastre
   isAnimating = false; // Detener la animación

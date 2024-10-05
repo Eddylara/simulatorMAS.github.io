@@ -32,11 +32,11 @@
         <canvas class="scene" width="600px" height="440px" id="canvas">
         </canvas>
       </main>
-      <p>Ecuaciones</p>
+
       <div class="equation_container">
-        <div class="equation" id="eqPos">x(t) = Asen(wt+p)</div>
-        <div class="equation" id="eqVelo">x(t) = Awcos(wt+p)</div>
-        <div class="equation" id="eqAce">x(t) = -Awsen(wt+p)</div>
+        <div class="equation" id="eqPos">x(t) = Asen(&omega;t + &phi;) [m]</div>
+        <div class="equation" id="eqVelo">v(t) = A&omega;cos(&omega;t + &phi;) [m/s]</div>
+        <div class="equation" id="eqAce">a(t) = -A&omega;<sup>2</sup>sen(&omega;t + &phi;) [m/s<sup>2</sup>]</div>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
           </label>
         </div>
         <button type="button" id="btn-restart"> Restart</button>
-        <i class="fa-solid fa-play" id="btnPlay"></i>
+        <i class="fa-solid fa-play desaparecer" id="btnPlay"></i>
       </aside>
     </div>
   </div>
