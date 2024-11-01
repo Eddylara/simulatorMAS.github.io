@@ -1,8 +1,8 @@
-let scene = document.querySelector("#canvas"); // Canvas en HTML
+let canvas = document.querySelector("#canvas"); // Canvas en HTML
 let $pos = document.querySelector("#pos"); // Espacio posición
 let $vel = document.querySelector("#vel"); // Espacio velocidad
 let $ace = document.querySelector("#ace"); // Espacio aceleración
-let ctx = scene.getContext("2d");
+let ctx = canvas.getContext("2d");
 
 // Entrada de masa
 let $masaInput = document.querySelector("#masa");
@@ -12,12 +12,18 @@ let $constResorte = document.querySelector("#resorte_const");
 $constResorte.value = 50;
 // Botón para iniciar/detener la animación
 let $playBt = document.querySelector("#btnPlay");
-// Boton para reiniciar
+// Botón para reiniciar
 let $btnRestart = document.querySelector("#btn-restart");
+// Checkbox para mostrar equilibrio
+let $checkboxEquilibrio = document.querySelector("#ver_equilibrio");
+let mostrarEquilibrio = $checkboxEquilibrio.checked;
+
 // ECUACIONES
 let $divEcuPos = document.querySelector("#eqPos");
 let $divEcuVel = document.querySelector("#eqVelo");
 let $divEcuAce = document.querySelector("#eqAce");
+
+
 
 function restaurarEcua() {
   $divEcuPos.innerHTML = "x(t) = Asen(&omega;t + &phi;) [m]";
@@ -27,41 +33,52 @@ function restaurarEcua() {
 }
 
 function actualizarEcua() {
-  let samplitude = Math.round((amplitude / 100).toFixed(4) * 1000) / 1000;
-  let somega = Math.round(omega.toFixed(4) * 1000) / 1000;
-  let coe2 = Math.round((samplitude * omega).toFixed(4) * 1000) / 1000;
-  let coe3 = Math.round((samplitude * omega * omega).toFixed(4) * 1000) / 1000;
-  let sphase = "+ <sup>1</sup>/<sub>2</sub>&pi;";
-  if (phase < 0) {
-    sphase = "- <sup>1</sup>/<sub>2</sub>&pi;";
-  }
+  let samplitude = Math.round(amplitudeMeters * 1000) / 1000;
+  let somega = Math.round(omega * 1000) / 1000;
+  let coe2 = Math.round(amplitudeMeters * omega * 1000) / 1000;
+  let coe3 = Math.round(amplitudeMeters * omega * omega * 1000) / 1000;
+  let sphase = phase >= 0 ? "+ " : "- ";
+  sphase += Math.abs(phase) === Math.PI / 2 ? "<sup>1</sup>/<sub>2</sub>&pi;" : (Math.abs(phase) / Math.PI).toFixed(2) + "&pi;";
   $divEcuPos.innerHTML = `x(t) = ${samplitude}sen(${somega}t ${sphase}) [m]`;
   $divEcuVel.innerHTML = `v(t) = ${coe2}cos(${somega}t ${sphase}) [m/s]`;
   $divEcuAce.innerHTML = `a(t) = -${coe3}sen(${somega}t ${sphase}) [m/s<sup>2</sup>]`;
 }
+
 // Variables de control
 let isDragging = false;
 let possibleDragging = true;
 let widthMasa = massToPixel(600);
 let heightMasa = massToPixel(600);
-let amplitude = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud
+let escalaPixelsPorMetro = 100; // Número de píxeles que representan 1 metro
+
+let amplitudeMeters = 0; // Amplitud en metros (inicialmente 0)
+let amplitudeMaxMeters = (canvas.width / 2 - widthMasa / 2 - 42) / escalaPixelsPorMetro; // Amplitud máxima en metros
+let amplitude = amplitudeMeters * escalaPixelsPorMetro; // Amplitud en píxeles
+
 let omega = Math.sqrt($constResorte.value / ($masaInput.value / 1000)); // Frecuencia angular
 let period = ((2 * Math.PI) / omega) * 1000; // Período en milisegundos
 let phase = 0; // Fase inicial
 let startTime = null; // Tiempo de inicio
-let elapsedTime = null;
+let elapsedTime = 0;
 let timeSave = 0;
 
 // Variables para la animación
-let posx = 0; // Posición
+let posx = 0; // Posición en píxeles
+let posxMeters = 0; // Posición en metros
 let velocity = 0; // Velocidad
 let acceleration = 0; // Aceleración
 let isAnimating = false; // Estado de la animación
 let animationId = null; // ID de la animación para detenerla
 
+// Evento para el checkbox de mostrar equilibrio
+$checkboxEquilibrio.addEventListener("change", function () {
+  mostrarEquilibrio = this.checked;
+  dibujarEscena();
+});
+
 function dibujarSuelo() {
   ctx.fillStyle = "#8B4513"; // Color marrón para el suelo
-  ctx.fillRect(0, scene.height / 2 + heightMasa / 2 + 60, scene.width, 10); // Suelo
+  ctx.fillRect(0, canvas.height / 2 + heightMasa / 2 + 60, canvas.width, 10); // Suelo
 }
 
 function drawSpring(x1, y1, x2, y2, coils = 10) {
@@ -87,15 +104,16 @@ function drawSpring(x1, y1, x2, y2, coils = 10) {
 function dibujarEquilibrio() {
   ctx.setLineDash([8, 4]);
   ctx.beginPath();
+  const equilibriumX = canvas.width / 2 + 40;
   ctx.moveTo(
-    canvas.width / 2 + 40,
+    equilibriumX,
     canvas.height / 2 - heightMasa / 2 + 20 // Punto de inicio (fijo)
   );
   ctx.lineTo(
-    canvas.width / 2 + 40,
+    equilibriumX,
     canvas.height / 2 + heightMasa / 2 + 100 // Punto final (fijo)
   );
-  ctx.strokeStyle = "red";
+  ctx.strokeStyle = "grey";
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.setLineDash([]); // Limpiar el estilo de línea punteada
@@ -103,6 +121,43 @@ function dibujarEquilibrio() {
 
 function massToPixel(masa) {
   return Math.round(17980 / 599.8 + (70 * masa) / 599.8);
+}
+
+function dibujarRegla() {
+  const reglaY = canvas.height / 2 + heightMasa / 2 + 70; // Posición vertical de la regla
+  const equilibriumX = canvas.width / 2 + 40; // Posición X del punto de equilibrio
+  const numDivisiones = 10; // Número de divisiones positivas y negativas
+  const divisionLength = 10; // Longitud de las marcas pequeñas
+  const longDivisionLength = 15; // Longitud de las marcas largas
+
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+
+  // Dibujar línea base de la regla
+  ctx.moveTo(equilibriumX - numDivisiones * escalaPixelsPorMetro, reglaY);
+  ctx.lineTo(equilibriumX + numDivisiones * escalaPixelsPorMetro, reglaY);
+  ctx.stroke();
+
+  // Dibujar divisiones y etiquetas
+  for (let i = -numDivisiones; i <= numDivisiones; i++) {
+    const x = equilibriumX + i * escalaPixelsPorMetro;
+    ctx.beginPath();
+    ctx.moveTo(x, reglaY);
+    ctx.lineTo(
+      x,
+      reglaY + (i % 1 === 0 ? longDivisionLength : divisionLength)
+    );
+    ctx.stroke();
+
+    // Agregar etiquetas cada 1 metro
+    if (i % 1 === 0) {
+      ctx.font = "12px Arial";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.fillText(i.toString(), x, reglaY + 25);
+    }
+  }
 }
 
 function dibujarEscena() {
@@ -120,45 +175,72 @@ function dibujarEscena() {
 
   // Dibujar el resorte
   const springStartX = 0;
-  const springEndX = posx + canvas.width / 2 + 40 - heightMasa / 2;
+  const springEndX = posx + canvas.width / 2 + 40 - widthMasa / 2;
   const springY = canvas.height / 2 + 60;
   drawSpring(springStartX, springY, springEndX, springY);
 
   // Dibujar Suelo
   dibujarSuelo();
 
-  // Dibujar Punto de equilibrio
-  dibujarEquilibrio();
-}
-amplitude = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud Maxima
-function animate(timestamp) {
-  let hh = !startTime;
+  // Dibujar Punto de equilibrio si está seleccionado
+  if (mostrarEquilibrio) {
+    dibujarEquilibrio();
+  }
 
+  // Dibujar la regla métrica
+  dibujarRegla();
+
+  // Dibujar el cronómetro en la esquina superior derecha
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "right";
+  ctx.fillText(`Tiempo: ${elapsedTime.toFixed(2)} s`, canvas.width - 10, 30);
+
+  // Mostrar posición actual al arrastrar en la esquina inferior izquierda
+  if (isDragging) {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "left";
+    ctx.fillText(
+      `Posición: ${posxMeters.toFixed(3)} m`,
+      10,
+      canvas.height - 10
+    );
+  }
+}
+
+function metrosAPixeles(metros) {
+  return metros * escalaPixelsPorMetro;
+}
+
+function pixelesAMetros(pixeles) {
+  return pixeles / escalaPixelsPorMetro;
+}
+
+function animate(timestamp) {
   if (!startTime) {
     startTime = timestamp;
-    console.log("HOLAAA");
   } // Marcar el inicio
 
   elapsedTime = (timestamp - startTime) / 1000; // Calcular tiempo transcurrido
 
-  console.log("Amplitud ", amplitude);
-  console.log("Omega: ", omega);
-  posx = amplitude * Math.sin(omega * elapsedTime + phase);
+  posxMeters = amplitudeMeters * Math.sin(omega * elapsedTime + phase);
+  posx = metrosAPixeles(posxMeters);
 
   // Calcular velocidad
-  velocity = (amplitude / 100) * omega * Math.cos(omega * elapsedTime + phase);
+  velocity = amplitudeMeters * omega * Math.cos(omega * elapsedTime + phase);
 
   // Calcular aceleración
   acceleration =
-    (-amplitude / 100) * omega * omega * Math.sin(omega * elapsedTime + phase);
+    -amplitudeMeters * omega * omega * Math.sin(omega * elapsedTime + phase);
 
   // Dibujar la escena
   dibujarEscena();
 
-  // Mostrar información (opcional)
-  $pos.innerHTML = `x = ${Math.round(posx.toFixed(3) * 100) / 10000}`;
-  $vel.innerHTML = `v = ${Math.round(velocity.toFixed(5) * 10000) / 10000}`;
-  $ace.innerHTML = `a = ${Math.round(acceleration.toFixed(5) * 10000) / 10000}`;
+  // Mostrar información
+  $pos.innerHTML = `x = ${posxMeters.toFixed(3)} m`;
+  $vel.innerHTML = `v = ${velocity.toFixed(3)} m/s`;
+  $ace.innerHTML = `a = ${acceleration.toFixed(3)} m/s<sup>2</sup>`;
 
   // Continuar la animación solo si está activa
   if (isAnimating) {
@@ -168,53 +250,59 @@ function animate(timestamp) {
 
 // EVENTOS
 
-let offsetXFromMass = 0; // Diferencia entre la posición del mouse y la masa
+let offsetXFromMass = 0; // Diferencia entre la posición del mouse y la masa en píxeles
 
-scene.addEventListener("mousedown", function (event) {
+canvas.addEventListener("mousedown", function (event) {
   // Comprobar si el mouse está sobre la masa
-  console.log("HOALAA");
-  const rect = scene.getBoundingClientRect();
+  const rect = canvas.getBoundingClientRect();
   const offsetX = event.clientX - rect.left;
   const offsetY = event.clientY - rect.top;
 
+  const masaX = posx + canvas.width / 2 - widthMasa / 2 + 40;
+  const masaY = canvas.height / 2 - heightMasa / 2 + 60;
+
   if (
-    offsetX >= canvas.width / 2 - widthMasa / 2 + 40 &&
-    offsetX <= canvas.width / 2 + widthMasa / 2 + 40 &&
-    offsetY >= canvas.height / 2 - heightMasa / 2 + 60 &&
-    offsetY <= canvas.height / 2 + heightMasa / 2 + 60 &&
+    offsetX >= masaX &&
+    offsetX <= masaX + widthMasa &&
+    offsetY >= masaY &&
+    offsetY <= masaY + heightMasa &&
     possibleDragging
   ) {
     isDragging = true; // Iniciar el arrastre
-    console.log("IS DRAGGING");
 
     // Calcular la diferencia entre el clic y la posición actual de la masa
-    offsetXFromMass = offsetX - (canvas.width / 2 + 40 - widthMasa / 2);
+    offsetXFromMass = offsetX - masaX;
   }
 });
 
-scene.addEventListener("mousemove", function (event) {
+canvas.addEventListener("mousemove", function (event) {
   if (isDragging) {
-    // Calcular la posición del mouse respecto al centro del canvas
-    let mouseXCurrent = event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
-    let centerX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del centro del resorte
-    let amplitudMax = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud máxima permitida
+    // Calcular la posición del mouse respecto al canvas
+    let mouseXCurrent =
+      event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
+    let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del punto de equilibrio
+    let maxAmplitudePixels =
+      amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
 
     // Calcular la nueva posición de la masa utilizando la diferencia
-    posx = mouseXCurrent - centerX - offsetXFromMass;
+    posx = mouseXCurrent - equilibriumX - offsetXFromMass;
 
     // Limitar la posición de la masa para que no exceda la amplitud máxima
-    if (posx > amplitudMax) {
-      posx = amplitudMax; // Limitar a la amplitud máxima positiva
-    } else if (posx < -amplitudMax) {
-      posx = -amplitudMax; // Limitar a la amplitud máxima negativa
+    if (posx > maxAmplitudePixels) {
+      posx = maxAmplitudePixels; // Limitar a la amplitud máxima positiva
+    } else if (posx < -maxAmplitudePixels) {
+      posx = -maxAmplitudePixels; // Limitar a la amplitud máxima negativa
     }
 
-    amplitude = Math.abs(posx); // Establecer la amplitud como la distancia desde el centro
-    dibujarEscena(); // Redibujar la escena
+    posxMeters = pixelesAMetros(posx);
+    amplitudeMeters = Math.abs(posxMeters); // Establecer la amplitud como la distancia desde el equilibrio
+
+    // Actualizar la escena
+    dibujarEscena();
   }
 });
 
-scene.addEventListener("mouseup", function () {
+canvas.addEventListener("mouseup", function () {
   if (isDragging) {
     isDragging = false; // Detener el arrastre
     startTime = performance.now(); // Iniciar el tiempo al soltar la masa
@@ -222,75 +310,81 @@ scene.addEventListener("mouseup", function () {
     possibleDragging = false;
 
     // Establecer la fase y la velocidad al soltar
-    if (posx > 0) {
+    if (posxMeters > 0) {
       phase = Math.PI / 2; // Ajustar la fase para x positivo con t = 0
     } else {
-      phase = (3 * Math.PI) / 2; // Ajustar la fase para x negativo con t = 0
+      phase = -Math.PI / 2; // Ajustar la fase para x negativo con t = 0
     }
 
     velocity = 0; // Velocidad inicial al soltar
+    actualizarEcua(); // Actualizar las ecuaciones con los nuevos valores
     requestAnimationFrame(animate); // Comenzar la animación
     $playBt.style.display = "block";
-    actualizarEcua();
-    $playBt.textContent = "Detener"; // Cambiar el texto del botón
+    $playBt.textContent = " Detener"; // Cambiar el texto del botón
   }
 });
 
 // Evento touchstart
-scene.addEventListener("touchstart", (event) => {
+canvas.addEventListener("touchstart", (event) => {
   event.preventDefault(); // Prevenir el comportamiento predeterminado
 
   const touch = event.changedTouches[0]; // Obtener el primer toque
-  const rect = scene.getBoundingClientRect(); // Obtener el rectángulo del elemento
+  const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del elemento
 
   // Calcular las coordenadas del toque con respecto al elemento
-  const touchX = (touch.clientX - rect.left) * 1.941747573; // Coordenada X
-  const touchY = (touch.clientY - rect.top) * 1.941747573; // Coordenada Y
+  const touchX = touch.clientX - rect.left; // Coordenada X
+  const touchY = touch.clientY - rect.top; // Coordenada Y
+
+  const masaX = posx + canvas.width / 2 - widthMasa / 2 + 40;
+  const masaY = canvas.height / 2 - heightMasa / 2 + 60;
 
   // Comprobar si el toque está sobre la masa
   if (
-    touchX >= canvas.width / 2 - widthMasa / 2 + 40 &&
-    touchX <= canvas.width / 2 + widthMasa / 2 + 40 &&
-    touchY >= canvas.height / 2 - heightMasa / 2 + 60 &&
-    touchY <= canvas.height / 2 + heightMasa / 2 + 60 &&
+    touchX >= masaX &&
+    touchX <= masaX + widthMasa &&
+    touchY >= masaY &&
+    touchY <= masaY + heightMasa &&
     possibleDragging
   ) {
     isDragging = true; // Iniciar el arrastre
-    console.log("IS DRAGGING");
 
     // Calcular la diferencia entre el toque y la posición actual de la masa
-    offsetXFromMass = touchX - (canvas.width / 2 + 40 - widthMasa / 2);
+    offsetXFromMass = touchX - masaX;
   }
 });
 
 // Evento touchmove
-scene.addEventListener("touchmove", (event) => {
+canvas.addEventListener("touchmove", (event) => {
   if (isDragging) {
     const touch = event.changedTouches[0]; // Obtener el primer toque
-    const rect = scene.getBoundingClientRect(); // Obtener el rectángulo del elemento
+    const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del elemento
 
     // Calcular la posición del toque
-    let touchXCurrent = (touch.clientX - rect.left) * 1.941747573; // Ajustar coordenadas del toque
-    let centerX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del centro del resorte
-    let amplitudMax = canvas.width / 2 - widthMasa / 2 - 42; // Amplitud máxima permitida
+    let touchXCurrent = touch.clientX - rect.left; // Ajustar coordenadas del toque
+    let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del punto de equilibrio
+    let maxAmplitudePixels =
+      amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
 
     // Calcular la nueva posición de la masa utilizando la diferencia
-    posx = touchXCurrent - centerX - offsetXFromMass;
+    posx = touchXCurrent - equilibriumX - offsetXFromMass;
 
     // Limitar la posición de la masa para que no exceda la amplitud máxima
-    if (posx > amplitudMax) {
-      posx = amplitudMax; // Limitar a la amplitud máxima positiva
-    } else if (posx < -amplitudMax) {
-      posx = -amplitudMax; // Limitar a la amplitud máxima negativa
+    if (posx > maxAmplitudePixels) {
+      posx = maxAmplitudePixels; // Limitar a la amplitud máxima positiva
+    } else if (posx < -maxAmplitudePixels) {
+      posx = -maxAmplitudePixels; // Limitar a la amplitud máxima negativa
     }
 
-    amplitude = Math.abs(posx); // Establecer la amplitud como la distancia desde el centro
-    dibujarEscena(); // Redibujar la escena
+    posxMeters = pixelesAMetros(posx);
+    amplitudeMeters = Math.abs(posxMeters); // Establecer la amplitud como la distancia desde el equilibrio
+
+    // Actualizar la escena
+    dibujarEscena();
   }
 });
 
 // Evento touchend
-scene.addEventListener("touchend", () => {
+canvas.addEventListener("touchend", () => {
   if (isDragging) {
     isDragging = false; // Detener el arrastre
     startTime = performance.now(); // Iniciar el tiempo al soltar la masa
@@ -298,16 +392,16 @@ scene.addEventListener("touchend", () => {
     possibleDragging = false;
 
     // Establecer la fase y la velocidad al soltar
-    if (posx > 0) {
+    if (posxMeters > 0) {
       phase = Math.PI / 2; // Ajustar la fase para x positivo con t = 0
     } else {
-      phase = (3 * Math.PI) / 2; // Ajustar la fase para x negativo con t = 0
+      phase = -Math.PI / 2; // Ajustar la fase para x negativo con t = 0
     }
 
     velocity = 0; // Velocidad inicial al soltar
+    actualizarEcua(); // Actualizar las ecuaciones con los nuevos valores
     requestAnimationFrame(animate); // Comenzar la animación
     $playBt.style.display = "block";
-    actualizarEcua();
     $playBt.textContent = "Detener"; // Cambiar el texto del botón
   }
 });
@@ -329,18 +423,30 @@ $masaInput.addEventListener("input", function () {
       period = ((2 * Math.PI) / omega) * 1000;
     }
 
+    // Recalcular amplitud máxima
+    amplitudeMaxMeters =
+      (canvas.width / 2 - widthMasa / 2 - 42) / escalaPixelsPorMetro;
+
     dibujarEscena(); // Redibujar la escena cuando cambie la masa
     $playBt.style.display = "none";
     isDragging = false; // Detener el arrastre
     isAnimating = false; // Detener la animación
     startTime = null; // Reiniciar el tiempo de inicio
     timeSave = 0; // Reiniciar el tiempo guardado
+    elapsedTime = 0; // Reiniciar el tiempo transcurrido
     posx = 0; // Posición inicial
+    posxMeters = 0;
     velocity = 0; // Velocidad inicial
     acceleration = 0; // Aceleración inicial
-    amplitude = 0; // Reiniciar la amplitud
+    amplitudeMeters = 0; // Reiniciar la amplitud en metros
+    amplitude = 0; // Reiniciar la amplitud en píxeles
     phase = 0; // Reiniciar la fase
     possibleDragging = true;
+
+    // Restablecer los valores mostrados
+    $pos.innerHTML = `x = 0.000 m`;
+    $vel.innerHTML = `v = 0.000 m/s`;
+    $ace.innerHTML = `a = 0.000 m/s<sup>2</sup>`;
   }
 });
 
@@ -358,12 +464,20 @@ $constResorte.addEventListener("input", () => {
     isAnimating = false; // Detener la animación
     startTime = null; // Reiniciar el tiempo de inicio
     timeSave = 0; // Reiniciar el tiempo guardado
+    elapsedTime = 0; // Reiniciar el tiempo transcurrido
     posx = 0; // Posición inicial
+    posxMeters = 0;
     velocity = 0; // Velocidad inicial
     acceleration = 0; // Aceleración inicial
-    amplitude = 0; // Reiniciar la amplitud
+    amplitudeMeters = 0; // Reiniciar la amplitud en metros
+    amplitude = 0; // Reiniciar la amplitud en píxeles
     phase = 0; // Reiniciar la fase
     possibleDragging = true;
+
+    // Restablecer los valores mostrados
+    $pos.innerHTML = `x = 0.000 m`;
+    $vel.innerHTML = `v = 0.000 m/s`;
+    $ace.innerHTML = `a = 0.000 m/s<sup>2</sup>`;
   }
 });
 
@@ -374,10 +488,17 @@ function pararAnimacion() {
   }
   startTime = null; // Reiniciar el tiempo de inicio
   timeSave = 0; // Reiniciar el tiempo guardado
+  elapsedTime = 0; // Reiniciar el tiempo transcurrido
   // Reiniciar la posición y otros valores
   posx = 0; // Posición inicial
+  posxMeters = 0;
   velocity = 0; // Velocidad inicial
   acceleration = 0; // Aceleración inicial
+
+  // Restablecer los valores mostrados
+  $pos.innerHTML = `x = 0.000 m`;
+  $vel.innerHTML = `v = 0.000 m/s`;
+  $ace.innerHTML = `a = 0.000 m/s<sup>2</sup>`;
 
   dibujarEscena(); // Redibujar la escena para mostrar la posición inicial
 }
@@ -388,19 +509,20 @@ $playBt.addEventListener("click", function () {
     cancelAnimationFrame(animationId);
     timeSave = elapsedTime; // Guardar el tiempo transcurrido
     isAnimating = false;
-    $playBt.textContent = "Continuar";
+    $playBt.textContent = " Continuar";
   } else {
     // Iniciar la animación desde el punto donde se detuvo
     isAnimating = true;
     startTime = performance.now() - timeSave * 1000; // Ajustar startTime al tiempo acumulado
     requestAnimationFrame(animate);
-    $playBt.textContent = "Detener";
+    $playBt.textContent = " Detener";
   }
 });
 
 $btnRestart.addEventListener("click", () => {
   resetSimulation();
 });
+
 function resetSimulation() {
   restaurarEcua();
   $playBt.style.display = "none";
@@ -409,20 +531,33 @@ function resetSimulation() {
   isAnimating = false; // Detener la animación
   startTime = null; // Reiniciar el tiempo de inicio
   timeSave = 0; // Reiniciar el tiempo guardado
+  elapsedTime = 0; // Reiniciar el tiempo transcurrido
   posx = 0; // Posición inicial
+  posxMeters = 0;
   velocity = 0; // Velocidad inicial
   acceleration = 0; // Aceleración inicial
-  amplitude = 0; // Reiniciar la amplitud
+  amplitudeMeters = 0; // Reiniciar la amplitud en metros
+  amplitude = 0; // Reiniciar la amplitud en píxeles
   phase = 0; // Reiniciar la fase
   possibleDragging = true;
 
   // Reiniciar entradas de usuario
   $masaInput.value = 600; // Valor predeterminado para la masa
   $constResorte.value = 50; // Valor predeterminado para la constante del resorte
+  $checkboxEquilibrio.checked = true; // Reiniciar el checkbox
+  mostrarEquilibrio = true;
 
-  // Redibujar la escena
+  // Recalcular amplitud máxima
   widthMasa = massToPixel($masaInput.value);
   heightMasa = massToPixel($masaInput.value);
+  amplitudeMaxMeters =
+    (canvas.width / 2 - widthMasa / 2 - 42) / escalaPixelsPorMetro;
+
+  // Restablecer los valores mostrados
+  $pos.innerHTML = `x = 0.000 m`;
+  $vel.innerHTML = `v = 0.000 m/s`;
+  $ace.innerHTML = `a = 0.000 m/s<sup>2</sup>`;
+
   dibujarEscena(); // Redibujar la escena para mostrar la posición inicial
 }
 

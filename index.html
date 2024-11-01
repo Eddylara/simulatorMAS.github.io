@@ -27,7 +27,7 @@
         <div class="variales">
           <div id="pos" class="itemvar">x = 0 m</div>
           <div id="vel" class="itemvar">v = 0 m/s</div>
-          <div id="ace" class="itemvar">a = 0 m/s2</div>
+          <div id="ace" class="itemvar">a = 0 m/s<sup>2</sup></div>
         </div>
         <canvas class="scene" width="600px" height="440px" id="canvas">
         </canvas>
@@ -43,20 +43,32 @@
     <div class="main_right">
       <aside class="options">
         <div class="form">
-          <label>
-            Constante del Resorte:
-            <input type="number" name="const" id="resorte_const" min="5" max="2500" step="5"
-              placeholder="Introduce la constante del resorte [N/m]" />
-          </label>
+          <div class="label_first">
+            <label>
+              Constante del Resorte [N/m]:
+              <input type="number" name="const" id="resorte_const" min="5" max="2500" step="5"
+                placeholder="Introduce la constante del resorte [N/m]" />
+            </label>
+  
+            <label>
+              Masa [g]:
+              <input type="number" name="masaObj" id="masa" min="0.2" max="600" step="5"
+                placeholder="Introduce la masa en [g]" />
+            </label>
 
-          <label>
-            Masa :
-            <input type="number" name="masaObj" id="masa" min="0.2" max="600" step="5"
-              placeholder="Introduce la masa en [g]" />
-          </label>
+            <label>
+              <input type="checkbox" name="visu_equilibri" id="ver_equilibrio" checked> Mostrar Equilibrio
+            </label>
+            
+          </div>
+
+          
         </div>
-        <button type="button" id="btn-restart"> Restart</button>
+        <div class="box_boton">
+          <button type="button" id="btn-restart"> Reiniciar Medición</button>
         <i class="fa-solid fa-play desaparecer" id="btnPlay"></i>
+        </div>
+        
       </aside>
     </div>
   </div>
