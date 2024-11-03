@@ -545,7 +545,7 @@ function resetSimulation() {
 }
 
 // Ajustar el tamaño del canvas para dispositivos con alta densidad de píxeles
-function resizeCanvasToDisplaySize(canvas) {
+/*function resizeCanvasToDisplaySize(canvas) {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
@@ -559,10 +559,10 @@ function resizeCanvasToDisplaySize(canvas) {
   }
 
   return false;
-}
+
 
 // Llama a esta función al iniciar
-resizeCanvasToDisplaySize(canvas);
+resizeCanvasToDisplaySize(canvas);}*/
 
 // Dibujar la escena inicial antes de iniciar la animación
 dibujarEscena();
