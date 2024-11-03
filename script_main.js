@@ -1,7 +1,7 @@
-let canvas = document.querySelector("#canvas"); // Canvas en HTML
-let $pos = document.querySelector("#pos"); // Espacio posición
-let $vel = document.querySelector("#vel"); // Espacio velocidad
-let $ace = document.querySelector("#ace"); // Espacio aceleración
+let canvas = document.querySelector("#canvas");
+let $pos = document.querySelector("#pos");
+let $vel = document.querySelector("#vel");
+let $ace = document.querySelector("#ace");
 let ctx = canvas.getContext("2d");
 
 // Entrada de masa
@@ -146,10 +146,7 @@ function dibujarRegla() {
     const x = equilibriumX + i * escalaPixelsPorMetro;
     ctx.beginPath();
     ctx.moveTo(x, reglaY);
-    ctx.lineTo(
-      x,
-      reglaY + (i % 1 === 0 ? longDivisionLength : divisionLength)
-    );
+    ctx.lineTo(x, reglaY + (i % 1 === 0 ? longDivisionLength : divisionLength));
     ctx.stroke();
 
     // Agregar etiquetas cada 1 metro
@@ -281,11 +278,9 @@ canvas.addEventListener("mousedown", function (event) {
 canvas.addEventListener("mousemove", function (event) {
   if (isDragging) {
     // Calcular la posición del mouse respecto al canvas
-    let mouseXCurrent =
-      event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
+    let mouseXCurrent = event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
     let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del punto de equilibrio
-    let maxAmplitudePixels =
-      amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
+    let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
 
     // Calcular la nueva posición de la masa utilizando la diferencia
     posx = mouseXCurrent - equilibriumX - offsetXFromMass;
@@ -323,7 +318,7 @@ canvas.addEventListener("mouseup", function () {
     actualizarEcua(); // Actualizar las ecuaciones con los nuevos valores
     requestAnimationFrame(animate); // Comenzar la animación
     $playBt.style.display = "block";
-    $playBt.textContent = " Detener"; // Cambiar el texto del botón
+    $playBt.textContent = "Detener"; // Cambiar el texto del botón
   }
 });
 
@@ -334,9 +329,13 @@ canvas.addEventListener("touchstart", function (event) {
   const touch = event.changedTouches[0]; // Obtener el primer toque
   const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
 
+  // Calcular factores de escala
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
   // Calcular las coordenadas del toque con respecto al canvas
-  const touchX = touch.clientX - rect.left;
-  const touchY = touch.clientY - rect.top;
+  const touchX = (touch.clientX - rect.left) * scaleX;
+  const touchY = (touch.clientY - rect.top) * scaleY;
 
   const masaX = posx + canvas.width / 2 - widthMasa / 2 + 40;
   const masaY = canvas.height / 2 - heightMasa / 2 + 60;
@@ -363,8 +362,12 @@ canvas.addEventListener("touchmove", function (event) {
     const touch = event.changedTouches[0]; // Obtener el primer toque
     const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
 
+    // Calcular factores de escala
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
     // Calcular la posición del toque respecto al canvas
-    let touchXCurrent = touch.clientX - rect.left;
+    let touchXCurrent = (touch.clientX - rect.left) * scaleX;
     let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2;
     let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro;
 
@@ -483,41 +486,19 @@ $constResorte.addEventListener("input", () => {
   }
 });
 
-function pararAnimacion() {
-  if (isAnimating) {
-    cancelAnimationFrame(animationId); // Detener la animación actual
-    isAnimating = false;
-  }
-  startTime = null; // Reiniciar el tiempo de inicio
-  timeSave = 0; // Reiniciar el tiempo guardado
-  elapsedTime = 0; // Reiniciar el tiempo transcurrido
-  // Reiniciar la posición y otros valores
-  posx = 0; // Posición inicial
-  posxMeters = 0;
-  velocity = 0; // Velocidad inicial
-  acceleration = 0; // Aceleración inicial
-
-  // Restablecer los valores mostrados
-  $pos.innerHTML = `x = 0.000 m`;
-  $vel.innerHTML = `v = 0.000 m/s`;
-  $ace.innerHTML = `a = 0.000 m/s<sup>2</sup>`;
-
-  dibujarEscena(); // Redibujar la escena para mostrar la posición inicial
-}
-
 $playBt.addEventListener("click", function () {
   if (isAnimating) {
     // Detener la animación
     cancelAnimationFrame(animationId);
     timeSave = elapsedTime; // Guardar el tiempo transcurrido
     isAnimating = false;
-    $playBt.textContent = " Continuar";
+    $playBt.textContent = "Continuar";
   } else {
     // Iniciar la animación desde el punto donde se detuvo
     isAnimating = true;
     startTime = performance.now() - timeSave * 1000; // Ajustar startTime al tiempo acumulado
     requestAnimationFrame(animate);
-    $playBt.textContent = " Detener";
+    $playBt.textContent = "Detener";
   }
 });
 
@@ -562,6 +543,26 @@ function resetSimulation() {
 
   dibujarEscena(); // Redibujar la escena para mostrar la posición inicial
 }
+
+// Ajustar el tamaño del canvas para dispositivos con alta densidad de píxeles
+function resizeCanvasToDisplaySize(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  const width = rect.width * dpr;
+  const height = rect.height * dpr;
+
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+    return true;
+  }
+
+  return false;
+}
+
+// Llama a esta función al iniciar
+resizeCanvasToDisplaySize(canvas);
 
 // Dibujar la escena inicial antes de iniciar la animación
 dibujarEscena();
