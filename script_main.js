@@ -321,7 +321,7 @@ canvas.addEventListener("mouseup", function () {
   }
 });
 
-// Evento touchstart
+// Eventos táctiles (mantén solo una versión)
 canvas.addEventListener("touchstart", (event) => {
   event.preventDefault(); // Prevenir el comportamiento predeterminado
 
@@ -350,9 +350,10 @@ canvas.addEventListener("touchstart", (event) => {
   }
 });
 
-// Evento touchmove
 canvas.addEventListener("touchmove", (event) => {
   if (isDragging) {
+    event.preventDefault(); // Prevenir el comportamiento predeterminado
+
     const touch = event.changedTouches[0]; // Obtener el primer toque
     const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del elemento
 
@@ -379,7 +380,6 @@ canvas.addEventListener("touchmove", (event) => {
   }
 });
 
-// Evento touchend
 canvas.addEventListener("touchend", () => {
   if (isDragging) {
     isDragging = false; // Detener el arrastre
@@ -392,89 +392,6 @@ canvas.addEventListener("touchend", () => {
       phase = Math.PI / 2; // Ajustar la fase para x positivo con t = 0
     } else {
       phase = -Math.PI / 2; // Ajustar la fase para x negativo con t = 0
-    }
-
-    velocity = 0; // Velocidad inicial al soltar
-    actualizarEcua(); // Actualizar las ecuaciones con los nuevos valores
-    requestAnimationFrame(animate); // Comenzar la animación
-    $playBt.style.display = "block";
-    $playBt.textContent = "Detener"; // Cambiar el texto del botón
-  }
-});
-
-// Evento touchstart
-canvas.addEventListener("touchstart", function (event) {
-  event.preventDefault(); // Prevenir el comportamiento predeterminado
-
-  const touch = event.changedTouches[0]; // Obtener el primer toque
-  const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
-
-  // Calcular las coordenadas del toque con respecto al canvas
-  const touchX = touch.clientX - rect.left;
-  const touchY = touch.clientY - rect.top;
-
-  const masaX = posx + canvas.width / 2 - widthMasa / 2 + 40;
-  const masaY = canvas.height / 2 - heightMasa / 2 + 60;
-
-  // Comprobar si el toque está sobre la masa
-  if (
-    touchX >= masaX &&
-    touchX <= masaX + widthMasa &&
-    touchY >= masaY &&
-    touchY <= masaY + heightMasa &&
-    possibleDragging
-  ) {
-    isDragging = true; // Iniciar el arrastre
-
-    // Calcular la diferencia entre el toque y la posición actual de la masa
-    offsetXFromMass = touchX - masaX;
-  }
-});
-
-// Evento touchmove
-canvas.addEventListener("touchmove", function (event) {
-  if (isDragging) {
-    event.preventDefault(); // Prevenir el comportamiento predeterminado
-
-    const touch = event.changedTouches[0]; // Obtener el primer toque
-    const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
-
-    // Calcular la posición del toque respecto al canvas
-    let touchXCurrent = touch.clientX - rect.left;
-    let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2;
-    let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro;
-
-    // Calcular la nueva posición de la masa utilizando la diferencia
-    posx = touchXCurrent - equilibriumX - offsetXFromMass;
-
-    // Limitar la posición de la masa para que no exceda la amplitud máxima
-    if (posx > maxAmplitudePixels) {
-      posx = maxAmplitudePixels;
-    } else if (posx < -maxAmplitudePixels) {
-      posx = -maxAmplitudePixels;
-    }
-
-    posxMeters = pixelesAMetros(posx);
-    amplitudeMeters = Math.abs(posxMeters);
-
-    // Actualizar la escena
-    dibujarEscena();
-  }
-});
-
-// Evento touchend
-canvas.addEventListener("touchend", function () {
-  if (isDragging) {
-    isDragging = false; // Detener el arrastre
-    startTime = performance.now(); // Iniciar el tiempo al soltar la masa
-    isAnimating = true; // Iniciar la animación
-    possibleDragging = false;
-
-    // Establecer la fase y la velocidad al soltar
-    if (posxMeters > 0) {
-      phase = Math.PI / 2;
-    } else {
-      phase = -Math.PI / 2;
     }
 
     velocity = 0; // Velocidad inicial al soltar
