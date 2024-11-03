@@ -146,7 +146,10 @@ function dibujarRegla() {
     const x = equilibriumX + i * escalaPixelsPorMetro;
     ctx.beginPath();
     ctx.moveTo(x, reglaY);
-    ctx.lineTo(x, reglaY + (i % 1 === 0 ? longDivisionLength : divisionLength));
+    ctx.lineTo(
+      x,
+      reglaY + (i % 1 === 0 ? longDivisionLength : divisionLength)
+    );
     ctx.stroke();
 
     // Agregar etiquetas cada 1 metro
@@ -251,6 +254,7 @@ function animate(timestamp) {
 
 let offsetXFromMass = 0; // Diferencia entre la posición del mouse y la masa en píxeles
 
+// Eventos de mouse
 canvas.addEventListener("mousedown", function (event) {
   // Comprobar si el mouse está sobre la masa
   const rect = canvas.getBoundingClientRect();
@@ -277,9 +281,11 @@ canvas.addEventListener("mousedown", function (event) {
 canvas.addEventListener("mousemove", function (event) {
   if (isDragging) {
     // Calcular la posición del mouse respecto al canvas
-    let mouseXCurrent = event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
+    let mouseXCurrent =
+      event.clientX - canvas.getBoundingClientRect().left; // Ajustar coordenadas del mouse respecto al canvas
     let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del punto de equilibrio
-    let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
+    let maxAmplitudePixels =
+      amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
 
     // Calcular la nueva posición de la masa utilizando la diferencia
     posx = mouseXCurrent - equilibriumX - offsetXFromMass;
@@ -321,16 +327,16 @@ canvas.addEventListener("mouseup", function () {
   }
 });
 
-// Eventos táctiles (mantén solo una versión)
-canvas.addEventListener("touchstart", (event) => {
+// Eventos táctiles
+canvas.addEventListener("touchstart", function (event) {
   event.preventDefault(); // Prevenir el comportamiento predeterminado
 
   const touch = event.changedTouches[0]; // Obtener el primer toque
-  const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del elemento
+  const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
 
-  // Calcular las coordenadas del toque con respecto al elemento
-  const touchX = touch.clientX - rect.left; // Coordenada X
-  const touchY = touch.clientY - rect.top; // Coordenada Y
+  // Calcular las coordenadas del toque con respecto al canvas
+  const touchX = touch.clientX - rect.left;
+  const touchY = touch.clientY - rect.top;
 
   const masaX = posx + canvas.width / 2 - widthMasa / 2 + 40;
   const masaY = canvas.height / 2 - heightMasa / 2 + 60;
@@ -350,37 +356,37 @@ canvas.addEventListener("touchstart", (event) => {
   }
 });
 
-canvas.addEventListener("touchmove", (event) => {
+canvas.addEventListener("touchmove", function (event) {
   if (isDragging) {
     event.preventDefault(); // Prevenir el comportamiento predeterminado
 
     const touch = event.changedTouches[0]; // Obtener el primer toque
-    const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del elemento
+    const rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
 
-    // Calcular la posición del toque
-    let touchXCurrent = touch.clientX - rect.left; // Ajustar coordenadas del toque
-    let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2; // Posición del punto de equilibrio
-    let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro; // Amplitud máxima en píxeles
+    // Calcular la posición del toque respecto al canvas
+    let touchXCurrent = touch.clientX - rect.left;
+    let equilibriumX = canvas.width / 2 + 40 - widthMasa / 2;
+    let maxAmplitudePixels = amplitudeMaxMeters * escalaPixelsPorMetro;
 
     // Calcular la nueva posición de la masa utilizando la diferencia
     posx = touchXCurrent - equilibriumX - offsetXFromMass;
 
     // Limitar la posición de la masa para que no exceda la amplitud máxima
     if (posx > maxAmplitudePixels) {
-      posx = maxAmplitudePixels; // Limitar a la amplitud máxima positiva
+      posx = maxAmplitudePixels;
     } else if (posx < -maxAmplitudePixels) {
-      posx = -maxAmplitudePixels; // Limitar a la amplitud máxima negativa
+      posx = -maxAmplitudePixels;
     }
 
     posxMeters = pixelesAMetros(posx);
-    amplitudeMeters = Math.abs(posxMeters); // Establecer la amplitud como la distancia desde el equilibrio
+    amplitudeMeters = Math.abs(posxMeters);
 
     // Actualizar la escena
     dibujarEscena();
   }
 });
 
-canvas.addEventListener("touchend", () => {
+canvas.addEventListener("touchend", function () {
   if (isDragging) {
     isDragging = false; // Detener el arrastre
     startTime = performance.now(); // Iniciar el tiempo al soltar la masa
@@ -389,9 +395,9 @@ canvas.addEventListener("touchend", () => {
 
     // Establecer la fase y la velocidad al soltar
     if (posxMeters > 0) {
-      phase = Math.PI / 2; // Ajustar la fase para x positivo con t = 0
+      phase = Math.PI / 2;
     } else {
-      phase = -Math.PI / 2; // Ajustar la fase para x negativo con t = 0
+      phase = -Math.PI / 2;
     }
 
     velocity = 0; // Velocidad inicial al soltar
